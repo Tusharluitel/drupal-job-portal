@@ -1,0 +1,416 @@
+/* Modern CSS for Job Portal Rating Module */
+
+.rating-organizations-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.rating-page-title {
+    font-size: 2rem;
+    color: #1e293b;
+    margin-bottom: 30px;
+    font-weight: 700;
+}
+
+.organizations-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 24px;
+}
+
+.organization-card {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 24px;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    display: flex;
+    flex-direction: column;
+}
+
+.organization-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+}
+
+.organization-card h3 {
+    margin-top: 0;
+    margin-bottom: 15px;
+    font-size: 1.25rem;
+    color: #0f172a;
+}
+
+.organization-card h3 a {
+    color: inherit;
+    text-decoration: none;
+}
+
+.organization-card h3 a:hover {
+    color: #0071B3;
+    /* Theme brand color */
+}
+
+.org-card-body {
+    flex-grow: 1;
+    color: #64748b;
+    margin-bottom: 20px;
+    font-size: 0.95rem;
+    line-height: 1.5;
+}
+
+.org-card-footer {
+    border-top: 1px solid #e2e8f0;
+    padding-top: 15px;
+    text-align: right;
+}
+
+.btn-rate {
+    display: inline-block;
+    padding: 8px 16px;
+    background-color: #0071B3;
+    color: #ffffff;
+    text-decoration: none;
+    border-radius: 6px;
+    font-weight: 600;
+    font-size: 0.9rem;
+    transition: background-color 0.2s;
+}
+
+.btn-rate:hover {
+    background-color: #005a91;
+    color: #ffffff;
+    text-decoration: none;
+}
+
+/* Rating Form Styles */
+.rating-form-wrapper {
+    max-width: 600px;
+    margin: 40px auto;
+    background: #ffffff;
+    padding: 30px;
+    border-radius: 12px;
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+    border: 1px solid #e2e8f0;
+}
+
+.rating-form-header {
+    margin-bottom: 24px;
+    border-bottom: 2px solid #f1f5f9;
+    padding-bottom: 16px;
+}
+
+.rating-form-header h2 {
+    margin: 0;
+    color: #1e293b;
+    font-size: 1.75rem;
+}
+
+.rating-form-wrapper .form-item {
+    margin-bottom: 20px;
+}
+
+.rating-form-wrapper label {
+    display: block;
+    font-weight: 600;
+    margin-bottom: 8px;
+    color: #334155;
+}
+
+.rating-form-wrapper select,
+.rating-form-wrapper textarea {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    font-size: 1rem;
+    color: #1e293b;
+}
+
+.rating-form-wrapper select:focus,
+.rating-form-wrapper textarea:focus {
+    outline: none;
+    border-color: #0071B3;
+    box-shadow: 0 0 0 3px rgba(0, 113, 179, 0.1);
+}
+
+.rating-form-wrapper .form-submit {
+    background-color: #059669;
+    color: white;
+    padding: 12px 24px;
+    border: none;
+    border-radius: 6px;
+    font-size: 1rem;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    width: 100%;
+    margin-top: 10px;
+}
+
+.rating-form-wrapper .form-submit:hover {
+    background-color: #047857;
+}
+
+/* Dynamic Pros and Cons Styles */
+.pros-cons-wrapper {
+    border: 1px solid #e2e8f0;
+    padding: 15px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    background: #f8fafc;
+}
+
+.pros-cons-wrapper legend {
+    font-weight: 600;
+    color: #334155;
+    padding: 0 5px;
+    font-size: 1.1rem;
+}
+
+.button-add-more {
+    margin-top: 12px;
+    background-color: #e2e8f0 !important;
+    color: #334155 !important;
+    border: 1px dashed #cbd5e1 !important;
+    padding: 6px 12px !important;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: background-color 0.2s;
+    width: auto !important;
+    display: inline-block;
+}
+
+.button-add-more:hover {
+    background-color: #cbd5e1 !important;
+}
+
+.dynamic-item {
+    display: flex;
+    align-items: center;
+}
+
+.dynamic-item .form-text {
+    flex-grow: 1;
+    margin-right: 10px;
+}
+
+.rating-form-wrapper .captcha {
+    background: #f8fafc;
+    padding: 15px;
+    border-radius: 6px;
+    border: 1px dashed #cbd5e1;
+    margin-bottom: 20px;
+}
+
+/* Logo specific styles */
+.org-card-logo {
+    text-align: center;
+    margin-bottom: 20px;
+    padding-bottom: 15px;
+    border-bottom: 1px solid #f1f5f9;
+}
+
+.org-card-logo img {
+    max-width: 100%;
+    height: auto;
+    border-radius: 8px;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+}
+
+/* Node View Rating Styles */
+.organization-rating-container {
+    margin-top: 40px;
+    padding-top: 20px;
+    border-top: 2px solid #e2e8f0;
+}
+
+.rating-summary-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #f8fafc;
+    padding: 20px;
+    border-radius: 8px;
+    border: 1px solid #e2e8f0;
+    margin-bottom: 30px;
+}
+
+.rating-summary-header .rating-average {
+    font-size: 1.2rem;
+}
+
+.rating-summary-header .score {
+    font-weight: 700;
+    color: #0f172a;
+    margin-left: 10px;
+}
+
+.rating-summary-header .count {
+    color: #64748b;
+    font-size: 0.95rem;
+    margin-left: 5px;
+}
+
+.btn-rate-org {
+    display: inline-block;
+    padding: 10px 20px;
+    background: #059669;
+    color: white;
+    text-decoration: none;
+    border-radius: 6px;
+    font-weight: bold;
+    transition: background 0.2s;
+}
+
+.btn-rate-org:hover {
+    background: #047857;
+    color: white;
+}
+
+.has-rated-msg {
+    color: #10b981;
+    font-weight: bold;
+    padding: 10px 20px;
+    background: #ecfdf5;
+    border-radius: 6px;
+    border: 1px solid #a7f3d0;
+}
+
+.reviews-list h3 {
+    margin-bottom: 20px;
+    color: #1e293b;
+    border-bottom: 1px solid #cbd5e1;
+    padding-bottom: 10px;
+}
+
+.review-item {
+    padding: 20px;
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
+}
+
+.review-header {
+    margin-bottom: 15px;
+    display: flex;
+    align-items: center;
+}
+
+.review-stars {
+    margin-right: 15px;
+}
+
+.review-author {
+    color: #64748b;
+    font-size: 0.9rem;
+}
+
+.review-comment {
+    margin-bottom: 20px;
+    color: #334155;
+    line-height: 1.6;
+}
+
+.review-pros-cons {
+    display: flex;
+    gap: 20px;
+    margin-top: 15px;
+    padding-top: 15px;
+    border-top: 1px dashed #cbd5e1;
+}
+
+.pros-list,
+.cons-list {
+    flex: 1;
+}
+
+.pros-list h4 {
+    color: #059669;
+    margin-top: 0;
+    margin-bottom: 10px;
+}
+
+.cons-list h4 {
+    color: #dc2626;
+    margin-top: 0;
+    margin-bottom: 10px;
+}
+
+.pros-list ul,
+.cons-list ul {
+    margin: 0;
+    padding-left: 20px;
+    color: #475569;
+}
+
+/* Premium Organization Profile Node Styles */
+.organization-profile-premium {
+    background: transparent;
+    border: none;
+    margin-bottom: 40px;
+}
+
+.org-profile-hero {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    gap: 30px;
+    background: #ffffff;
+    padding: 40px;
+    border-radius: 12px;
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+    border: 1px solid #e2e8f0;
+}
+
+.org-profile-hero-logo {
+    flex: 0 0 180px;
+    background: #f8fafc;
+    padding: 15px;
+    border-radius: 12px;
+    border: 1px solid #e2e8f0;
+    text-align: center;
+}
+
+.org-profile-hero-logo img {
+    max-width: 100%;
+    height: auto;
+    border-radius: 8px;
+}
+
+.org-profile-hero-details {
+    flex: 1;
+    min-width: 300px;
+}
+
+.org-hero-title {
+    font-size: 2.5rem !important;
+    font-weight: 800 !important;
+    color: #0f172a !important;
+    margin-top: 0 !important;
+    margin-bottom: 15px !important;
+    line-height: 1.2 !important;
+}
+
+.org-hero-description {
+    color: #475569;
+    font-size: 1.1rem;
+    line-height: 1.7;
+}
+
+/* Hide default node field labels to keep it clean */
+.org-profile-hero-details .field-label {
+    display: none;
+}
+
+.org-profile-hero-details .field {
+    margin-bottom: 15px;
+}
+
+.org-profile-ratings-wrapper {
+    margin-top: 40px;
+}

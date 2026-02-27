@@ -1,0 +1,43 @@
+.jobportal-rating-dashboard-container {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 30px;
+    padding: 20px;
+    background-color: #f8fafc;
+    border-radius: 12px;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+
+@media (min-width: 900px) {
+    .jobportal-rating-dashboard-container {
+        grid-template-columns: 1fr 1fr;
+    }
+}
+
+.chart-wrapper {
+    background: #ffffff;
+    border-radius: 12px;
+    padding: 24px;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+    transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+}
+
+.chart-wrapper:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.08), 0 4px 6px -2px rgba(0, 0, 0, 0.04);
+}
+
+.chart-wrapper h3 {
+    margin-top: 0;
+    margin-bottom: 20px;
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #1e293b;
+    border-bottom: 2px solid #f1f5f9;
+    padding-bottom: 12px;
+}
+
+/* Ensure canvas plays nicely in its container */
+canvas {
+    max-width: 100%;
+}

@@ -1,0 +1,119 @@
+/**
+ * Implements hook_theme().
+ */
+function jobportal_rating_theme($existing, $type, $theme, $path) {
+  return array(
+    'jobportal_rating_list' => array(
+      'variables' => array(
+        'header' => array(),
+        'rows'   => array(),
+        'node'   => NULL,
+      ),
+      'template' => 'jobportal_rating', // This maps to jobportal_rating.tpl.php
+    ),
+  );
+}
+
+/**
+ * Implements hook_menu() - Updated to include a view page
+ */
+function jobportal_rating_menu() {
+  // Existing Rate tab
+  $items['node/%node/rate'] = array(
+    'title' => 'Rate Organization',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('jobportal_rating_form', 1),
+    'access callback' => 'jobportal_rating_access',
+    'access arguments' => array(1),
+    'type' => MENU_LOCAL_TASK,
+  );
+
+  // New View Ratings tab
+  $items['node/%node/ratings'] = array(
+    'title' => 'View Ratings',
+    'page callback' => 'jobportal_rating_view_page',
+    'page arguments' => array(1),
+    'access callback' => 'node_access',
+    'access arguments' => array('view', 1),
+    'type' => MENU_LOCAL_TASK,
+  );
+
+  return $items;
+}
+
+/**
+ * Page callback to display the ratings list using the template.
+ */
+function jobportal_rating_view_page($node) {
+  // Fetch ratings from the database
+  $result = db_select('jobportal_employer_ratings', 'r')
+    ->fields('r')
+    ->condition('employer_uid', $node->nid)
+    ->orderBy('timestamp', 'DESC')
+    ->execute();
+
+  $rows = array();
+  foreach ($result as $row) {
+    $rows[] = array(
+      'rating' => $row->rating,
+      'comment' => $row->comment,
+      'timestamp' => $row->timestamp,
+      // You could load the user to show the name:
+      'username' => user_load($row->rater_uid)->name,
+    );
+  }
+
+  $header = array(t('User'), t('Rating'), t('Comment'), t('Date'));
+
+  // Call the theme function
+  return theme('jobportal_rating_list', array(
+    'header' => $header,
+    'rows' => $rows,
+    'node' => $node,
+  ));
+}
+
+// Don't forget to include the access and form functions I provided earlier!
+
+
+
+///.tpl.php 
+
+<?php
+/**
+ * @file
+ * Template for organization ratings list.
+ * Variables: $header, $rows, $node.
+ */
+?>
+<div class="jobportal-rating-container">
+  <h2><?php print t('Ratings for !org', array('!org' => $node->title)); ?></h2>
+
+  <?php if (empty($rows)): ?>
+    <p><?php print t('No ratings yet for this organization.'); ?></p>
+  <?php else: ?>
+    <table class="rating-table">
+      <thead>
+        <tr>
+          <?php foreach ($header as $title): ?>
+            <th><?php print $title; ?></th>
+          <?php endforeach; ?>
+        </tr>
+      </thead>
+      <tbody>
+        <?php foreach ($rows as $row): ?>
+          <tr>
+            <td><?php print check_plain($row['username']); ?></td>
+            <td><strong><?php print $row['rating']; ?> / 5</strong></td>
+            <td><?php print check_plain($row['comment']); ?></td>
+            <td><?php print format_date($row['timestamp'], 'short'); ?></td>
+          </tr>
+        <?php endforeach; ?>
+      </tbody>
+    </table>
+  <?php endif; ?>
+
+  <div class="rating-actions">
+    <?php print l(t('Add a Review'), "node/{$node->nid}/rate", array('attributes' => array('class' => array('button')))); ?>
+  </div>
+</div>

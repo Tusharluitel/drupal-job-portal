@@ -1,0 +1,6 @@
+name = Job Portal Rating
+description = Allows jobseekers to rate and review organizations
+core = 7.x
+package = Job Portal
+dependencies[] = captcha
+

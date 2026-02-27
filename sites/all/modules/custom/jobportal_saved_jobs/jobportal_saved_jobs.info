@@ -1,0 +1,8 @@
+name = Job Portal Saved Jobs
+description = Allows jobseekers to save/bookmark job postings.
+core = 7.x
+package = Job Portal
+
+files[] = includes/SavedJobController.inc
+files[] = tests/jobportal_saved_jobs.test
+

@@ -1,0 +1,35 @@
+<?php
+/**
+ * Implements hook_schema().
+ */
+function jobportal_rating_schema() {
+  $schema['jobportal_employer_ratings'] = array(
+    'description' => 'Stores ratings and reviews for organizations.',
+    'fields' => array(
+      'rid' => array('type' => 'serial', 'unsigned' => TRUE, 'not null' => TRUE),
+      'rater_uid' => array('type' => 'int', 'unsigned' => TRUE, 'not null' => TRUE),
+      'employer_uid' => array('type' => 'int', 'unsigned' => TRUE, 'not null' => TRUE),
+      'rating' => array('type' => 'int', 'size' => 'tiny', 'not null' => TRUE),
+      'pros' => array('type' => 'text', 'size' => 'big', 'not null' => FALSE, 'serialize' => TRUE),
+      'cons' => array('type' => 'text', 'size' => 'big', 'not null' => FALSE, 'serialize' => TRUE),
+      'comment' => array('type' => 'text', 'size' => 'big', 'not null' => FALSE),
+      'timestamp' => array('type' => 'int', 'not null' => TRUE),
+    ),
+    'primary key' => array('rid'),
+  );
+  return $schema;
+}
+
+/**
+ * Add Pros and Cons fields to rating table.
+ */
+function jobportal_rating_update_7001() {
+  $spec = array(
+    'type' => 'text',
+    'size' => 'big',
+    'not null' => FALSE,
+    'serialize' => TRUE,
+  );
+  db_add_field('jobportal_employer_ratings', 'pros', $spec);
+  db_add_field('jobportal_employer_ratings', 'cons', $spec);
+}

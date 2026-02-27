@@ -1,0 +1,98 @@
+<?php
+
+
+/**
+ * Implements hook_menu().
+ */
+function jobportal_core_menu() {
+  $items = array();
+
+  $items['jobs'] = array(
+    'title'           => 'Job Listings',
+    'page callback'   => 'jobportal_core_jobs_page',
+    'access arguments' => array('access content'),
+    'type'            => MENU_NORMAL_ITEM,
+  );
+
+  return $items;
+}
+
+/**
+ * Implements hook_theme().
+ */
+function jobportal_core_theme($existing, $type, $theme, $path) {
+  return array(
+    'jobportal_core_jobs_page' => array(
+      'variables' => array(
+        'jobs'       => array(),
+        'pager'      => '',
+        'total'      => 0,
+      ),
+      'template' => 'jobportal-core-jobs-page',
+      'path'     => drupal_get_path('module', 'jobportal_core') . '/templates',
+    ),
+  );
+}
+
+/**
+ * Page callback: /jobs
+ */
+function jobportal_core_jobs_page() {
+  drupal_add_css(drupal_get_path('module', 'jobportal_core') . '/css/jobportal_core.css');
+
+  $items_per_page = 3;
+
+  $total = db_query("SELECT COUNT(*) FROM {node} WHERE type = 'job_posting' AND status = 1")
+    ->fetchField();
+
+  // Drupal Pager API
+  pager_default_initialize($total, $items_per_page);
+
+  $page = isset($_GET['page']) && is_numeric($_GET['page']) ? (int) $_GET['page'] : 0;
+
+
+
+  // Calculate  offset
+  $offset = $page * $items_per_page; // Skip number of job postings
+
+  $query = db_select('node', 'n')
+    ->fields('n', array('nid'))
+    ->condition('n.type', 'job_posting')
+    ->condition('n.status', 1)
+    ->orderBy('n.created', 'DESC')
+    ->range($offset, $items_per_page); //Limit number of job postings and offset
+    
+  $nids = $query->execute()->fetchCol();
+
+  $jobs = array();
+  foreach ($nids as $nid) {
+    $node = node_load($nid);
+    if (!$node) {
+      continue;
+    }
+
+    $jobs[] = array(
+      'nid'      => $node->nid,
+      'title'    => check_plain($node->title),
+      'url'      => url('node/' . $node->nid),
+      'company'  => isset($node->field_company_name[LANGUAGE_NONE][0]['value'])
+                    ? check_plain($node->field_company_name[LANGUAGE_NONE][0]['value']) : '',
+      'location' => isset($node->field_job_location[LANGUAGE_NONE][0]['value'])
+                    ? check_plain($node->field_job_location[LANGUAGE_NONE][0]['value']) : '',
+      'job_type' => isset($node->field_job_type[LANGUAGE_NONE][0]['value'])
+                    ? check_plain($node->field_job_type[LANGUAGE_NONE][0]['value']) : '',
+      'created'  => format_date($node->created, 'custom', 'M j, Y'),
+    );
+  }
+
+
+// Drupal Pager Theme
+  $pager = theme('pager');
+
+
+  return theme('jobportal_core_jobs_page', array(
+    'jobs'  => $jobs,
+    'pager' => $pager,
+    'total' => $total,
+  ));
+}

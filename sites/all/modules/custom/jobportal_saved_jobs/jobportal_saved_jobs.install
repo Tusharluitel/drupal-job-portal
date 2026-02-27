@@ -1,0 +1,47 @@
+<?php
+
+function jobportal_saved_jobs_schema()
+{
+    $schema['jobportal_saved_jobs'] = array(
+        'description' => 'Stores saved/bookmarked job postings per user.',
+        'fields' => array(
+            'saved_job_id' => array(
+                'type'     => 'serial',
+                'unsigned' => TRUE,
+                'not null' => TRUE,
+                'description' => 'Primary key: unique ID for each saved job record.',
+            ),
+            'uid' => array(
+                'type'     => 'int',
+                'unsigned' => TRUE,
+                'not null' => TRUE,
+                'description' => 'The {users}.uid of the jobseeker who saved the job.',
+            ),
+            'job_nid' => array(
+                'type'     => 'int',
+                'unsigned' => TRUE,
+                'not null' => TRUE,
+                'description' => 'The {node}.nid of the saved job_posting node.',
+            ),
+            'created' => array(
+                'type'     => 'int',
+                'not null' => TRUE,
+                'description' => 'Unix timestamp of when the job was saved.',
+            ),
+        ),
+        'primary key' => array('saved_job_id'),
+        'unique keys' => array(
+            'uid_job_nid' => array('uid', 'job_nid'),
+        ),
+        'indexes' => array(
+            'uid' => array('uid'),
+        ),
+    );
+    return $schema;
+}
+
+
+function jobportal_saved_jobs_uninstall()
+{
+    drupal_uninstall_schema('jobportal_saved_jobs');
+}

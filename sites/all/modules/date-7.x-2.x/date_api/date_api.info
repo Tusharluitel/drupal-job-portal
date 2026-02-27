@@ -1,0 +1,11 @@
+name = Date API
+description = A Date API that can be used by other modules.
+package = Date/Time
+core = 7.x
+
+files[] = date_api.module
+files[] = date_api_sql.inc
+
+; Test coverage.
+files[] = tests/DateApiTestCase.test
+files[] = tests/DateApiUnitTestCase.test

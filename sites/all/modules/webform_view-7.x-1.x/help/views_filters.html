@@ -1,0 +1,33 @@
+<html>
+<head>
+<title>Using Webform View to apply contextual filters</title>
+</head>
+<body>
+	<h1>Using Webform View to apply contextual filters</h1>
+	<p>Your view may be constructed to take additional contextual filters,
+  and when configuring your webform you may wish to pass that argument in.
+  </p>
+  Say your content to be listed was tagged with an 'audience' vocabulary,
+  and you wanted to re-use the view in different webforms for each audience.
+  It may often be easier to just make some alternate displays and use them,
+  but if your list is large, the arguments are easier.
+  </p>
+	<h2>Set up the View</h2>
+	<ul>
+		<li>In Views UI, under "Advanced", use "Contextual filters: Add"</li>
+		<li>Select the rule for filtering, and use Views UI preview to confirm it
+    behaves as expected.</li>
+	</ul>
+  <h2>Configure the webform</h2>
+  <ul>
+    <li>In the webform node, edit the webform embedded view component.</li>
+    <li>You can enter your arguments for filtering there.</li>
+  </ul>
+  <p>However, this method is limited to webform editor control and gets set
+  once there.
+  If you want the filter to be more dynamic or contextual, you may be better 
+  off just <a href="https://drupal.org/comment/8141587#comment-8141587">
+  using Views Contextual Filters directly</a> to pull arguments from the 
+  environment.
+</body>
+</html>

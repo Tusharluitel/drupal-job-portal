@@ -1,0 +1,6 @@
+name = Flag Bookmark
+description = Provides an example bookmark flag and supporting views.
+core = 7.x
+dependencies[] = flag
+package = Flags
+files[] = plugins/flag_bookmark_plugin_validate_user.inc

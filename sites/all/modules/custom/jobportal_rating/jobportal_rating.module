@@ -1,0 +1,421 @@
+<?php
+
+/**
+* Implements hook_menu()
+*/
+function jobportal_rating_menu(){
+    $items['organizations'] = array(
+        'title' => 'Organizations',
+        'page callback' => 'jobportal_rating_organizations_list',
+        'access arguments' => array('access content'),
+        'type' => MENU_NORMAL_ITEM,
+    );
+
+    $items['node/%node/rate'] = array(
+        'title' => 'Rate Organization',
+        'page callback' => 'drupal_get_form',
+        'page arguments' => array('jobportal_rating_form', 1),
+        'access callback' => 'jobportal_rating_access',
+        'access arguments' => array(1),
+        'type'=> MENU_LOCAL_TASK //show as tab of the content
+    );
+
+    $items['admin/config/services/jobportal-rating'] = array(
+        'title' => 'Job Portal Rating Settings',
+        'description' => 'Configure Slack webhook URL for rating notifications.',
+        'page callback' => 'drupal_get_form',
+        'page arguments' => array('jobportal_rating_slack_settings_form'),
+        'access arguments' => array('administer site configuration'),
+        'type' => MENU_NORMAL_ITEM,
+    );
+
+    $items['admin/reports/jobportal-ratings'] = array(
+        'title' => 'Employer Ratings Dashboard',
+        'description' => 'Visual overview of employer ratings.',
+        'page callback' => 'jobportal_rating_dashboard_page',
+        'access arguments' => array('administer site configuration'),
+        'type' => MENU_NORMAL_ITEM,
+    );
+
+    return $items;
+}
+
+/**
+ * Implements hook_init().
+ * Intercepts requests to api/jobs/search and serves a JSON response
+ * directly, bypassing the Drupal menu router entirely.
+ */
+function jobportal_rating_init() {
+  $path = current_path();
+  if ($path === 'api/jobs/search') {
+    jobportal_job_search_ajax();
+  }
+}
+
+/**
+ * Admin settings form for Slack Webhook.
+ */
+function jobportal_rating_slack_settings_form($form, &$form_state) {
+  $form['jobportal_slack_webhook_url'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Slack Webhook URL'),
+    '#default_value' => variable_get('jobportal_slack_webhook_url', ''),
+    '#description' => t('Enter the Slack Webhook URL where rating notifications will be sent. Leave empty to disable Slack notifications.'),
+  );
+
+  return system_settings_form($form);
+}
+
+/**
+ * Implements hook_theme().
+ */
+function jobportal_rating_theme($existing, $type, $theme, $path) {
+  return array(
+    'jobportal_rating_organizations_list' => array(
+      'variables' => array('organizations' => array()),
+      'template' => 'templates/jobportal-rating-organizations',
+    ),
+    'jobportal_rating_form' => array(
+      'render element' => 'form',
+      'template' => 'templates/jobportal-rating-form',
+    ),
+    'jobportal_rating_node_view' => array(
+      'variables' => array(
+        'node' => NULL,
+        'view_mode' => 'full',
+        'avg_rating' => 0,
+        'review_count' => 0,
+        'has_rated' => FALSE,
+        'reviews' => array(),
+      ),
+      'template' => 'templates/jobportal-rating-node-view',
+    ),
+    'jobportal_rating_dashboard' => array(
+      'variables' => array(),
+      'template' => 'jobportal-rating-dashboard',
+      'path' => drupal_get_path('module', 'jobportal_rating') . '/templates',
+    ),
+    'node__organization_profile' => array(
+      'render element' => 'elements',
+      'base hook' => 'node',
+      'template' => 'node--organization-profile',
+      'path' => drupal_get_path('module', 'jobportal_rating') . '/templates',
+    ),
+  );
+}
+
+/**
+ * Access callback: Only Jobseeker can rate
+ */
+function jobportal_rating_access($node){
+    global $user;
+    return $node->type == 'organization_profile' && in_array('Jobseeker', $user->roles);
+}
+
+/**
+ * Page callback: Lists all targeted Organization Profiles.
+ */
+function jobportal_rating_organizations_list() {
+  // Attach the custom CSS
+  drupal_add_css(drupal_get_path('module', 'jobportal_rating') . '/css/jobportal_rating.css');
+
+  $query = new EntityFieldQuery();
+  $query->entityCondition('entity_type', 'node')
+    ->entityCondition('bundle', 'organization_profile')
+    ->propertyCondition('status', NODE_PUBLISHED)
+    ->propertyOrderBy('created', 'DESC');
+
+  $result = $query->execute();
+
+  if (isset($result['node'])) {
+    $nids = array_keys($result['node']);
+    $nodes = node_load_multiple($nids);
+    
+    // Pass the nodes to our custom template
+    return theme('jobportal_rating_organizations_list', array('organizations' => $nodes));
+  }
+  else {
+    return array(
+      '#markup' => t('<div class="no-organizations">No organizations found.</div>'),
+    );
+  }
+}
+
+ /**
+  * Rating form definition
+  */
+ function jobportal_rating_form($form, &$form_state, $node) {
+  $form['#attached']['css'][] = drupal_get_path('module', 'jobportal_rating') . '/css/jobportal_rating.css';
+  $form['#attached']['js'][] = drupal_get_path('module', 'jobportal_rating') . '/js/jobportal_rating.js';
+
+  $form['organization_nid'] = array('#type' => 'value', '#value' => $node->nid);
+  $form['rating'] = array(
+    '#type' => 'select',
+    '#title' => t('Rating'),
+    '#options' => array(1 => 1, 2 => 2, 3 => 3, 4 => 4, 5 => 5),
+    '#required' => TRUE,
+  );
+
+  $form['test'] = array(
+    '#type' => 'select',
+    '#title' => t('test'),
+    '#options' => array(1 => 1, 2 => 2, 3 => 3, 4 => 4, 5 => 5),
+    '#required' => TRUE,
+  );
+  
+  $form['pros_wrapper'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Pros'),
+    '#attributes' => array('id' => 'pros-container', 'class' => array('pros-cons-wrapper')),
+  );
+  $form['pros_wrapper']['pros_html'] = array(
+    '#markup' => '<div class="dynamic-inputs"><div class="dynamic-item"><input type="text" name="pros[]" class="form-text" placeholder="Enter a pro" /></div></div><button type="button" id="add-pro-btn" class="button button-add-more">+ Add More Pros</button>',
+  );
+
+  $form['cons_wrapper'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Cons'),
+    '#attributes' => array('id' => 'cons-container', 'class' => array('pros-cons-wrapper')),
+  );
+  $form['cons_wrapper']['cons_html'] = array(
+    '#markup' => '<div class="dynamic-inputs"><div class="dynamic-item"><input type="text" name="cons[]" class="form-text" placeholder="Enter a con" /></div></div><button type="button" id="add-con-btn" class="button button-add-more">+ Add More Cons</button>',
+  );
+
+  $form['comment'] = array('#type' => 'textarea', '#title' => t('Review Content'));
+  
+  // Add CAPTCHA if the module is enabled
+  if (module_exists('captcha')) {
+    $form['captcha'] = array(
+      '#type' => 'captcha',
+      '#captcha_type' => 'captcha/Math', // Uses the default Math captcha
+    );
+  }
+
+  $form['submit'] = array('#type' => 'submit', '#value' => t('Submit Rating'));
+  return $form;
+}
+
+/**
+ * Form submit handler.
+ */
+function jobportal_rating_form_submit($form, &$form_state) {
+  global $user;
+  
+  // Dynamic fields bypass standard Form API handling, so we read them from $_POST
+  $pros = isset($_POST['pros']) ? array_filter($_POST['pros']) : array();
+  $cons = isset($_POST['cons']) ? array_filter($_POST['cons']) : array();
+
+  db_insert('jobportal_employer_ratings')->fields(array(
+    'rater_uid' => $user->uid,
+    'employer_uid' => $form_state['values']['organization_nid'],
+    'rating' => $form_state['values']['rating'],
+    'pros' => serialize($pros),
+    'cons' => serialize($cons),
+    'comment' => $form_state['values']['comment'],
+    'timestamp' => REQUEST_TIME,
+  ))->execute();
+
+  // Send the Slack notification
+  jobportal_rating_send_slack_notification(
+    $form_state['values']['organization_nid'],
+    $form_state['values']['rating'],
+    $form_state['values']['comment'],
+    $user->uid
+  );
+
+  drupal_set_message(t('Thank you for your rating!'));
+  // Redirect back to the organization profile
+  $form_state['redirect'] = 'node/' . $form_state['values']['organization_nid'];
+}
+
+/**
+ * Implements hook_node_view().
+ * Displays the average rating and a link to rate the organization.
+ */
+function jobportal_rating_node_view($node, $view_mode, $langcode) {
+  if ($node->type == 'organization_profile' && ($view_mode == 'full' || $view_mode == 'teaser')) {
+    global $user;
+
+    // Attach CSS
+    drupal_add_css(drupal_get_path('module', 'jobportal_rating') . '/css/jobportal_rating.css');
+
+    // Calculate average rating
+    $avg_rating = db_query("SELECT AVG(rating) FROM {jobportal_employer_ratings} WHERE employer_uid = :nid", array(':nid' => $node->nid))->fetchField();
+    $count = db_query("SELECT COUNT(rating) FROM {jobportal_employer_ratings} WHERE employer_uid = :nid", array(':nid' => $node->nid))->fetchField();
+
+    $has_rated = FALSE;
+    if (in_array('Jobseeker', $user->roles)) {
+      $has_rated = (bool) db_query("SELECT 1 FROM {jobportal_employer_ratings} WHERE rater_uid = :uid AND employer_uid = :nid", array(':uid' => $user->uid, ':nid' => $node->nid))->fetchField();
+    }
+
+    $reviews = array();
+    // Only fetch individual reviews on the full node view, not teasers
+    if ($view_mode == 'full') {
+      $result = db_query("SELECT * FROM {jobportal_employer_ratings} WHERE employer_uid = :nid ORDER BY timestamp DESC", array(':nid' => $node->nid));
+      $reviews = $result->fetchAll();
+    }
+
+    $node->content['jobportal_rating'] = array(
+      '#theme' => 'jobportal_rating_node_view',
+      '#node' => $node,
+      '#view_mode' => $view_mode,
+      '#avg_rating' => $avg_rating,
+      '#review_count' => $count,
+      '#has_rated' => $has_rated,
+      '#reviews' => $reviews,
+      '#weight' => 100,
+    );
+  }
+}
+
+
+function jobportal_rating_send_slack_notification($organization_nid, $rating, $comment, $rater_uid) {
+  $webhook_url = variable_get('jobportal_slack_webhook_url', '');
+  
+  if (empty($webhook_url)) {
+    return;
+  }
+
+  // Load the organization node to get its title
+  $organization = node_load($organization_nid);
+  $org_title = $organization ? $organization->title : 'An organization';
+
+  // Load the rater user to get their name
+  $rater = user_load($rater_uid);
+  $rater_name = $rater ? $rater->name : 'Anonymous';
+
+  // Build the message payload
+  $message = sprintf(
+    "*New Rating Alert!*\n%s gave a %d-star rating to *%s*.\n*Review:* %s",
+    $rater_name,
+    $rating,
+    $org_title,
+    !empty($comment) ? $comment : 'No comment provided.'
+  );
+
+  $payload = array(
+    'text' => $message,
+  );
+
+  $options = array(
+    'method' => 'POST',
+    'data' => json_encode($payload),
+    'headers' => array('Content-Type' => 'application/json'),
+  );
+
+  $result = drupal_http_request($webhook_url, $options);
+  
+  if (isset($result->error)) {
+    watchdog('jobportal_rating', 'Failed to send Slack notification: %error', array('%error' => $result->error), WATCHDOG_ERROR);
+  }
+}
+
+/**
+ * Page callback: Renders the Dashboard with Chart.js.
+ */
+function jobportal_rating_dashboard_page() {
+  $avg_ratings = array();
+  $org_labels = array();
+  
+  $query1 = db_query("SELECT employer_uid, AVG(rating) as avg_rating, COUNT(rating) as rating_count FROM {jobportal_employer_ratings} GROUP BY employer_uid ORDER BY avg_rating DESC LIMIT 10");
+  foreach ($query1 as $row) {
+    if ($node = node_load($row->employer_uid)) {
+      $org_labels[] = $node->title;
+      $avg_ratings[] = round($row->avg_rating, 1);
+    }
+  }
+
+  $months = array();
+  $counts = array();
+  
+  $query2 = db_query("SELECT FROM_UNIXTIME(timestamp, '%Y-%m') as rating_month, COUNT(rating) as total_ratings FROM {jobportal_employer_ratings} GROUP BY rating_month ORDER BY rating_month ASC LIMIT 12");
+  foreach ($query2 as $row) {
+    $months[] = $row->rating_month;
+    $counts[] = $row->total_ratings;
+  }
+
+  $dashboard_data = array(
+    'orgLabels' => $org_labels,
+    'avgRatings' => $avg_ratings,
+    'trendMonths' => $months,
+    'trendCounts' => $counts,
+  );
+
+  // Add Chart.js from CDN
+  drupal_add_js('https://cdn.jsdelivr.net/npm/chart.js', 'external');
+
+  drupal_add_js(array('jobportalRatingDashboard' => $dashboard_data), 'setting');
+  drupal_add_js(drupal_get_path('module', 'jobportal_rating') . '/js/jobportal_rating_dashboard.js');
+
+  drupal_add_css(drupal_get_path('module', 'jobportal_rating') . '/css/jobportal_rating_dashboard.css');
+
+  return theme('jobportal_rating_dashboard');
+}
+
+/**
+ * AJAX callback: Search job postings by title.
+ * Route: api/jobs/search?q=<query>
+ * Returns JSON array of matching jobs.
+ */
+function jobportal_job_search_ajax() {
+  $query_string = isset($_GET['jobs']) ? trim($_GET['jobs']) : '';
+
+  if (strlen($query_string) < 2) {
+    drupal_json_output(array());
+    drupal_exit();
+  }
+
+  // Query matching job_posting nodes by title
+  $query = db_select('node', 'n')
+    ->fields('n', array('nid', 'title'))
+    ->condition('n.type', 'job_posting')
+    ->condition('n.status', 1)
+    ->condition('n.title', '%' . db_like($query_string) . '%', 'LIKE')
+    ->orderBy('n.created', 'DESC')
+    ->range(0, 8)
+    ->execute();
+
+  $results = array();
+  foreach ($query as $row) {
+    $node = node_load($row->nid);
+    $company = isset($node->field_company_name[LANGUAGE_NONE][0]['value'])
+      ? check_plain($node->field_company_name[LANGUAGE_NONE][0]['value'])
+      : '';
+
+    $results[] = array(
+      'nid'     => $row->nid,
+      'title'   => check_plain($row->title),
+      'company' => $company,
+      'url'     => url('node/' . $row->nid, array('absolute' => TRUE)),
+    );
+  }
+
+  drupal_json_output($results);
+  drupal_exit();
+}
+
+function jobportal_core_has_applied($uid, $job_nid) {
+  if (!$uid || !$job_nid) {
+    return FALSE;
+  }
+
+  $job_node = node_load($job_nid);
+  if (!$job_node) {
+    return FALSE;
+  }
+  
+  $job_title = $job_node->title;
+
+
+  $query = db_query("
+    SELECT ws.sid
+    FROM {webform_submissions} ws
+    JOIN {webform_submitted_data} wsd ON ws.sid = wsd.sid
+    JOIN {webform_component} wc ON wsd.cid = wc.cid AND wsd.nid = wc.nid
+    WHERE ws.uid = :uid
+    AND wc.form_key = 'job_reference'
+    AND wsd.data = :title
+  ", array(':uid' => $uid, ':title' => $job_title));
+
+  return (bool) $query->fetchField();
+}

@@ -1,0 +1,32 @@
+name = Job Portal
+description = Custom theme for the Job Portal website.
+core = 7.x
+base theme = bartik
+
+; Stylesheets
+stylesheets[all][] = css/style.css
+stylesheets[all][] = css/jobportal_search.css
+
+; Scripts
+scripts[] = js/jobportal_search.js
+
+; Regions
+regions[header] = Header
+regions[navigation] = Navigation
+regions[highlighted] = Highlighted
+regions[help] = Help
+regions[content] = Content
+regions[sidebar_first] = Left Sidebar
+regions[sidebar_second] = Right Sidebar
+regions[footer] = Footer
+
+; Settings
+settings[toggle_logo] = 1
+settings[toggle_name] = 1
+settings[toggle_slogan] = 1
+
+; Features
+features[] = logo
+features[] = name
+features[] = slogan
+features[] = favicon

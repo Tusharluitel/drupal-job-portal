@@ -1,0 +1,68 @@
+<?php
+
+
+class JobportalSavedJobsTestCase extends DrupalWebTestCase {
+
+  
+  public static function getInfo() {
+    return array(
+      'name' => 'Jobportal Saved Jobs Basic Test',
+      'description' => 'Tests save and unsave functionality.',
+      'group' => 'Jobportal',
+    );
+  }
+
+  public function setUp() {
+    parent::setUp(
+      'node',
+      'jobportal_saved_jobs'
+    );
+
+    // Create Jobseeker role.
+    $rid = $this->drupalCreateRole(array(), 'Jobseeker');
+
+    // Create user.
+    $this->user = $this->drupalCreateUser();
+    user_multiple_role_edit(array($this->user->uid), 'add_role', $rid);
+
+    // Login user.
+    $this->drupalLogin($this->user);
+
+    // Create job node.
+    $this->job = $this->drupalCreateNode(array(
+      'type' => 'job_posting',
+      'title' => 'Test Job',
+    ));
+  }
+
+  /**
+   * PASS TEST
+   * Saving job should return TRUE.
+   */
+  public function testSaveJobPass() {
+
+    jobportal_saved_jobs_save($this->user->uid, $this->job->nid);
+
+    $saved = jobportal_saved_jobs_is_saved(
+      $this->user->uid,
+      $this->job->nid
+    );
+
+    $this->assertTrue($saved, 'Job saved successfully (PASS).');
+  }
+
+  /**
+   * FAIL TEST
+   * This intentionally fails.
+   */
+  public function testSaveJobFail() {
+
+    $saved = jobportal_saved_jobs_is_saved(
+      $this->user->uid,
+      $this->job->nid
+    );
+
+    $this->assertTrue($saved, 'This test should FAIL.');
+  }
+
+}

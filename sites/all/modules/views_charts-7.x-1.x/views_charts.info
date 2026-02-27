@@ -1,0 +1,9 @@
+name = Views Charts
+description = "Views Charts provides a new style for views: Charts."
+dependencies[] = views
+dependencies[] = charts_graphs
+package = "Views"
+core = 7.x
+php = 5.1
+
+files[] = views_plugin_style_chart.inc

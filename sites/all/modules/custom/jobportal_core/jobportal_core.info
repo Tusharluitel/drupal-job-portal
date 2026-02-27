@@ -1,0 +1,5 @@
+name = Job Portal Core
+description = Core functionality for the Job Portal site, including the job listings page.
+core = 7.x
+version = 7.x-1.0
+package = Job Portal

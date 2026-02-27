@@ -1,0 +1,5 @@
+name = Revisioning UX
+description = Revisioning user experience improvements for more consistent tab behavior
+core = 7.x
+configure = admin/config/content/revisioning
+dependencies[] = revisioning

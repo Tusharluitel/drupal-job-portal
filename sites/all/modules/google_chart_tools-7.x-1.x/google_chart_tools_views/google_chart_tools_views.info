@@ -1,0 +1,9 @@
+name = Google Chart Tools Views Integration
+description = Provides a Google Chart Tools Views style.
+package = Charting
+core = 7.x
+files[] = views/google_chart_tools_views_plugin_style.inc
+dependencies[] = google_chart_tools
+dependencies[] = views
+
+

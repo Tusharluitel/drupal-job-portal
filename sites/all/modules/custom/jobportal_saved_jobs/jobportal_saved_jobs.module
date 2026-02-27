@@ -1,0 +1,162 @@
+<?php
+
+function jobportal_saved_jobs_entity_info()
+{
+    return array(
+        'saved_job' => array(
+            'label'            => t('Saved Job'),
+            'base table'       => 'jobportal_saved_jobs',
+            'entity keys'      => array(
+                'id' => 'saved_job_id',
+            ),
+            'controller class' => 'SavedJobController',
+            'module'           => 'jobportal_saved_jobs',
+        ),
+    );
+}
+
+function jobportal_saved_jobs_load($saved_job_id)
+{
+    $entities = entity_load('saved_job', array($saved_job_id));
+    return reset($entities);
+}
+
+function jobportal_saved_jobs_is_saved($uid, $job_nid)
+{
+    return entity_get_controller('saved_job')->isSaved($uid, $job_nid);
+}
+
+function jobportal_saved_jobs_save($uid, $job_nid)
+{
+    entity_get_controller('saved_job')->save($uid, $job_nid);
+}
+
+function jobportal_saved_jobs_delete($uid, $job_nid)
+{
+    entity_get_controller('saved_job')->delete($uid, $job_nid);
+}
+
+
+function jobportal_saved_jobs_menu()
+{
+    $items['saved-jobs'] = array(
+        'title'           => 'My Saved Jobs',
+        'page callback'   => 'jobportal_saved_jobs_page',
+        'access callback' => 'jobportal_saved_jobs_access',
+        'type'            => MENU_NORMAL_ITEM,
+    );
+
+    // AJAX  save/unsave for a job.
+    $items['saved-jobs/toggle/%node'] = array(
+        'title'           => 'Toggle Saved Job',
+        'page callback'   => 'jobportal_saved_jobs_toggle',
+        'page arguments'  => array(2),
+        'access callback' => 'jobportal_saved_jobs_access',
+        'type'            => MENU_CALLBACK,
+    );
+
+    return $items;
+}
+
+function jobportal_saved_jobs_access()
+{
+    global $user;
+    return user_is_logged_in() && in_array('Jobseeker', $user->roles);
+}
+
+
+function jobportal_saved_jobs_page()
+{
+    global $user;
+
+    drupal_add_css(drupal_get_path('module', 'jobportal_saved_jobs') . '/css/jobportal_saved_jobs.css');
+    drupal_add_js(drupal_get_path('module', 'jobportal_saved_jobs') . '/js/jobportal_saved_jobs.js');
+
+    $results = db_query(
+        "SELECT job_nid FROM {jobportal_saved_jobs} WHERE uid = :uid ORDER BY created DESC",
+        array(':uid' => $user->uid)
+    )->fetchCol();
+
+    $jobs = array();
+    if (!empty($results)) {
+        $nodes = node_load_multiple($results);
+        foreach ($results as $nid) {
+            if (isset($nodes[$nid]) && $nodes[$nid]->status) {
+                $jobs[] = $nodes[$nid];
+            }
+        }
+    }
+
+    return theme('jobportal_saved_jobs_list', array('jobs' => $jobs));
+}
+
+
+function jobportal_saved_jobs_toggle($node)
+{
+    global $user;
+
+    if ($node->type !== 'job_posting') {
+        drupal_json_output(array('error' => 'Invalid node type.'));
+        drupal_exit();
+    }
+
+    if (jobportal_saved_jobs_is_saved($user->uid, $node->nid)) {
+        jobportal_saved_jobs_delete($user->uid, $node->nid);
+        $saved = FALSE;
+    } else {
+        jobportal_saved_jobs_save($user->uid, $node->nid);
+        $saved = TRUE;
+    }
+
+    drupal_json_output(array('saved' => $saved));
+    drupal_exit();
+}
+
+function jobportal_saved_jobs_node_view($node, $view_mode, $langcode)
+{
+    if ($node->type !== 'job_posting' || $view_mode !== 'full') {
+        return;
+    }
+
+    global $user;
+
+    if (!user_is_logged_in() || !in_array('Jobseeker', $user->roles)) {
+        return;
+    }
+
+    drupal_add_css(drupal_get_path('module', 'jobportal_saved_jobs') . '/css/jobportal_saved_jobs.css');
+    drupal_add_js(drupal_get_path('module', 'jobportal_saved_jobs') . '/js/jobportal_saved_jobs.js');
+
+    $is_saved = jobportal_saved_jobs_is_saved($user->uid, $node->nid);
+    drupal_add_js(
+        array('jobportalSavedJobs' => array(
+            'toggleUrl' => url('saved-jobs/toggle/' . $node->nid),
+            'listUrl'   => url('saved-jobs'),
+        )),
+        'setting'
+    );
+
+    $button_label = $is_saved ? t('Saved') : t('Save Job');
+    $button_class = $is_saved ? 'saved-job-btn is-saved' : 'saved-job-btn';
+
+    $node->content['saved_job_toggle'] = array(
+        '#markup' => '<div class="saved-job-wrapper">'
+            . '<button class="' . $button_class . '" data-nid="' . $node->nid . '">'
+            . check_plain($button_label)
+            . '</button>'
+            . '<span class="saved-job-msg"></span>'
+            . '</div>',
+        '#weight' => 90,
+    );
+}
+
+function jobportal_saved_jobs_theme($existing, $type, $theme, $path)
+{
+    return array(
+        'jobportal_saved_jobs_list' => array(
+            'variables' => array('jobs' => array()),
+            'template'  => 'templates/jobportal-saved-jobs-list',
+            'path'      => drupal_get_path('module', 'jobportal_saved_jobs'),
+        ),
+    );
+}
