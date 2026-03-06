@@ -394,28 +394,3 @@ function jobportal_job_search_ajax() {
   drupal_exit();
 }
 
-function jobportal_core_has_applied($uid, $job_nid) {
-  if (!$uid || !$job_nid) {
-    return FALSE;
-  }
-
-  $job_node = node_load($job_nid);
-  if (!$job_node) {
-    return FALSE;
-  }
-  
-  $job_title = $job_node->title;
-
-
-  $query = db_query("
-    SELECT ws.sid
-    FROM {webform_submissions} ws
-    JOIN {webform_submitted_data} wsd ON ws.sid = wsd.sid
-    JOIN {webform_component} wc ON wsd.cid = wc.cid AND wsd.nid = wc.nid
-    WHERE ws.uid = :uid
-    AND wc.form_key = 'job_reference'
-    AND wsd.data = :title
-  ", array(':uid' => $uid, ':title' => $job_title));
-
-  return (bool) $query->fetchField();
-}

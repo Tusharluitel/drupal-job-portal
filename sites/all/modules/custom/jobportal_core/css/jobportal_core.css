@@ -165,3 +165,325 @@
         text-align: center;
     }
 }
+
+/* =========================================
+   Employer Dashboard Styles
+   ========================================= */
+
+.emp-dashboard {
+    max-width: 1000px;
+    margin: 40px auto;
+    padding: 0 20px;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    color: #1e293b;
+}
+
+/* Header */
+.emp-dashboard__header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 32px;
+    flex-wrap: wrap;
+    gap: 20px;
+}
+
+.emp-dashboard__heading {
+    flex: 1;
+}
+
+.emp-dashboard__title {
+    font-size: 2.25rem;
+    font-weight: 800;
+    margin: 0 0 8px 0;
+    color: #0f172a;
+    letter-spacing: -0.02em;
+}
+
+.emp-dashboard__subtitle {
+    font-size: 1.125rem;
+    color: #64748b;
+    margin: 0;
+}
+
+/* Buttons */
+.emp-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    border-radius: 8px;
+    text-decoration: none;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    border: none;
+    cursor: pointer;
+    line-height: 1;
+}
+
+.emp-btn__icon {
+    margin-right: 6px;
+    font-size: 1.1em;
+}
+
+.emp-btn--primary {
+    background: linear-gradient(135deg, #2563eb, #1d4ed8);
+    color: #ffffff;
+    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25);
+}
+
+.emp-btn--primary:hover {
+    background: linear-gradient(135deg, #1d4ed8, #1e40af);
+    box-shadow: 0 6px 16px rgba(37, 99, 235, 0.35);
+    transform: translateY(-1px);
+    color: #ffffff;
+}
+
+.emp-btn--outline {
+    background: transparent;
+    border: 2px solid #e2e8f0;
+    color: #475569;
+}
+
+.emp-btn--outline:hover {
+    border-color: #cbd5e1;
+    color: #1e293b;
+    background: #f8fafc;
+}
+
+.emp-btn--large {
+    padding: 12px 24px;
+    font-size: 1rem;
+}
+
+.emp-btn--sm {
+    padding: 8px 16px;
+    font-size: 0.875rem;
+}
+
+/* Stats Row */
+.emp-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 24px;
+    margin-bottom: 40px;
+}
+
+.emp-stat-card {
+    background: #ffffff;
+    border-radius: 16px;
+    padding: 24px;
+    display: flex;
+    align-items: center;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+    border: 1px solid #f1f5f9;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.emp-stat-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 20px -3px rgba(0, 0, 0, 0.08), 0 4px 6px -2px rgba(0, 0, 0, 0.04);
+}
+
+.emp-stat-card__icon {
+    font-size: 2.2rem;
+    margin-right: 20px;
+    width: 64px;
+    height: 64px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.emp-stat-card--blue .emp-stat-card__icon {
+    background: #eff6ff;
+    color: #2563eb;
+}
+
+.emp-stat-card--green .emp-stat-card__icon {
+    background: #f0fdf4;
+    color: #16a34a;
+}
+
+.emp-stat-card--gray .emp-stat-card__icon {
+    background: #f8fafc;
+    color: #64748b;
+}
+
+.emp-stat-card__body {
+    display: flex;
+    flex-direction: column;
+}
+
+.emp-stat-card__number {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #0f172a;
+    line-height: 1.2;
+}
+
+.emp-stat-card__label {
+    font-size: 0.95rem;
+    color: #64748b;
+    font-weight: 500;
+}
+
+/* Empty State */
+.emp-empty {
+    text-align: center;
+    padding: 80px 20px;
+    background: #f8fafc;
+    border: 2px dashed #cbd5e1;
+    border-radius: 16px;
+    margin-bottom: 40px;
+}
+
+.emp-empty__icon {
+    font-size: 3rem;
+    margin-bottom: 16px;
+    opacity: 0.8;
+}
+
+.emp-empty__title {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: #1e293b;
+    margin: 0 0 8px 0;
+}
+
+.emp-empty__text {
+    color: #64748b;
+    margin: 0 0 24px 0;
+    font-size: 1.05rem;
+}
+
+/* Table */
+.emp-table-wrap {
+    background: #ffffff;
+    border-radius: 16px;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+    border: 1px solid #f1f5f9;
+    overflow-x: auto;
+    margin-bottom: 40px;
+}
+
+.emp-table {
+    width: 100%;
+    border-collapse: collapse;
+    text-align: left;
+}
+
+.emp-table__th {
+    padding: 18px 24px;
+    background: #f8fafc;
+    color: #475569;
+    font-size: 0.85rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.emp-table__th--center,
+.emp-table__td--center {
+    text-align: center;
+}
+
+.emp-table__row {
+    border-bottom: 1px solid #f1f5f9;
+    transition: background 0.15s;
+}
+
+.emp-table__row:hover {
+    background: #f8fafc;
+}
+
+.emp-table__row:last-child {
+    border-bottom: none;
+}
+
+.emp-table__td {
+    padding: 20px 24px;
+    vertical-align: middle;
+    color: #334155;
+    white-space: nowrap;
+}
+
+.emp-table__td--title {
+    font-weight: 600;
+    font-size: 1.05rem;
+    white-space: normal;
+    min-width: 250px;
+}
+
+.emp-table__job-link {
+    color: #0f172a;
+    text-decoration: none;
+    transition: color 0.15s;
+}
+
+.emp-table__job-link:hover {
+    color: #2563eb;
+}
+
+.emp-category-pill {
+    display: inline-block;
+    padding: 4px 12px;
+    background: #f1f5f9;
+    color: #475569;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 500;
+}
+
+.emp-date-icon {
+    margin-right: 6px;
+    opacity: 0.7;
+}
+
+.emp-table__td--date {
+    color: #64748b;
+    font-size: 0.95rem;
+}
+
+.emp-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 0.825rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+}
+
+.emp-badge--active {
+    background: #ecfdf5;
+    color: #059669;
+}
+
+.emp-badge--inactive {
+    background: #f8fafc;
+    color: #64748b;
+    border: 1px solid #e2e8f0;
+}
+
+.emp-table__no-data {
+    color: #94a3b8;
+}
+
+@media (max-width: 768px) {
+    .emp-dashboard__header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .emp-btn--large {
+        width: 100%;
+    }
+
+    .emp-stats {
+        grid-template-columns: 1fr;
+    }
+}

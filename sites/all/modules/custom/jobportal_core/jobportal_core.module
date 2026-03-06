@@ -1,34 +1,77 @@
 <?php
 
-
 /**
  * Implements hook_menu().
  */
-function jobportal_core_menu() {
+function jobportal_core_menu()
+{
   $items = array();
 
+  // Public job listings page.
   $items['jobs'] = array(
-    'title'           => 'Job Listings',
-    'page callback'   => 'jobportal_core_jobs_page',
+    'title'            => 'Job Listings',
+    'page callback'    => 'jobportal_core_jobs_page',
     'access arguments' => array('access content'),
-    'type'            => MENU_NORMAL_ITEM,
+    'type'             => MENU_NORMAL_ITEM,
+  );
+
+  // Employer-only dashboard.
+  $items['employer/dashboard'] = array(
+    'title'            => 'Employer Dashboard',
+    'page callback'    => 'jobportal_core_employer_dashboard_page',
+    'access callback'  => 'jobportal_core_employer_access',
+    'type'             => MENU_NORMAL_ITEM,
   );
 
   return $items;
 }
 
 /**
+ * Access callback: only allow users with the Employer role.
+ */
+function jobportal_core_employer_access()
+{
+  global $user;
+  if (!user_is_logged_in()) {
+    return FALSE;
+  }
+  foreach ($user->roles as $role) {
+    if (strtolower($role) === 'employer') {
+      return TRUE;
+    }
+  }
+  return FALSE;
+}
+
+/**
  * Implements hook_theme().
  */
-function jobportal_core_theme($existing, $type, $theme, $path) {
+function jobportal_core_theme($existing, $type, $theme, $path)
+{
   return array(
+    // Public /jobs page.
     'jobportal_core_jobs_page' => array(
       'variables' => array(
-        'jobs'       => array(),
-        'pager'      => '',
-        'total'      => 0,
+        'jobs'  => array(),
+        'pager' => '',
+        'total' => 0,
       ),
       'template' => 'jobportal-core-jobs-page',
+      'path'     => drupal_get_path('module', 'jobportal_core') . '/templates',
+    ),
+
+    // Employer dashboard page.
+    'jobportal_employer_dashboard' => array(
+      'variables' => array(
+        'jobs'         => array(),
+        'total_jobs'   => 0,
+        'active_jobs'  => 0,
+        'inactive_jobs' => 0,
+        'username'     => '',
+        'has_org_profile' => FALSE,
+        'org_url'      => '',
+      ),
+      'template' => 'jobportal-employer-dashboard',
       'path'     => drupal_get_path('module', 'jobportal_core') . '/templates',
     ),
   );
@@ -37,7 +80,8 @@ function jobportal_core_theme($existing, $type, $theme, $path) {
 /**
  * Page callback: /jobs
  */
-function jobportal_core_jobs_page() {
+function jobportal_core_jobs_page()
+{
   drupal_add_css(drupal_get_path('module', 'jobportal_core') . '/css/jobportal_core.css');
 
   $items_per_page = 3;
@@ -45,24 +89,20 @@ function jobportal_core_jobs_page() {
   $total = db_query("SELECT COUNT(*) FROM {node} WHERE type = 'job_posting' AND status = 1")
     ->fetchField();
 
-  // Drupal Pager API
+  // Drupal Pager API.
   pager_default_initialize($total, $items_per_page);
 
-  $page = isset($_GET['page']) && is_numeric($_GET['page']) ? (int) $_GET['page'] : 0;
+  $page   = isset($_GET['page']) && is_numeric($_GET['page']) ? (int) $_GET['page'] : 0;
+  $offset = $page * $items_per_page;
 
-
-
-  // Calculate  offset
-  $offset = $page * $items_per_page; // Skip number of job postings
-
-  $query = db_select('node', 'n')
+  $nids = db_select('node', 'n')
     ->fields('n', array('nid'))
     ->condition('n.type', 'job_posting')
     ->condition('n.status', 1)
     ->orderBy('n.created', 'DESC')
-    ->range($offset, $items_per_page); //Limit number of job postings and offset
-    
-  $nids = $query->execute()->fetchCol();
+    ->range($offset, $items_per_page)
+    ->execute()
+    ->fetchCol();
 
   $jobs = array();
   foreach ($nids as $nid) {
@@ -70,29 +110,124 @@ function jobportal_core_jobs_page() {
     if (!$node) {
       continue;
     }
-
     $jobs[] = array(
       'nid'      => $node->nid,
       'title'    => check_plain($node->title),
       'url'      => url('node/' . $node->nid),
       'company'  => isset($node->field_company_name[LANGUAGE_NONE][0]['value'])
-                    ? check_plain($node->field_company_name[LANGUAGE_NONE][0]['value']) : '',
+        ? check_plain($node->field_company_name[LANGUAGE_NONE][0]['value']) : '',
       'location' => isset($node->field_job_location[LANGUAGE_NONE][0]['value'])
-                    ? check_plain($node->field_job_location[LANGUAGE_NONE][0]['value']) : '',
+        ? check_plain($node->field_job_location[LANGUAGE_NONE][0]['value']) : '',
       'job_type' => isset($node->field_job_type[LANGUAGE_NONE][0]['value'])
-                    ? check_plain($node->field_job_type[LANGUAGE_NONE][0]['value']) : '',
+        ? check_plain($node->field_job_type[LANGUAGE_NONE][0]['value']) : '',
       'created'  => format_date($node->created, 'custom', 'M j, Y'),
     );
   }
 
-
-// Drupal Pager Theme
   $pager = theme('pager');
-
 
   return theme('jobportal_core_jobs_page', array(
     'jobs'  => $jobs,
     'pager' => $pager,
     'total' => $total,
   ));
+}
+
+/**
+ * Page callback: employer/dashboard
+ */
+function jobportal_core_employer_dashboard_page()
+{
+  global $user;
+
+  // Add CSS for the dashboard
+  drupal_add_css(drupal_get_path('module', 'jobportal_core') . '/css/jobportal_core.css');
+
+  // Initialize variables
+  $jobs = array();
+  $total = 0;
+  $active_count = 0;
+  $draft_count = 0;
+
+  // Query nodes created by the current user of type 'job_posting'
+  $query = db_select('node', 'n')
+    ->fields('n', array('nid', 'title', 'status', 'created'))
+    ->condition('n.type', 'job_posting')
+    ->condition('n.uid', $user->uid)
+    ->orderBy('n.created', 'DESC');
+
+  $results = $query->execute();
+
+  foreach ($results as $record) {
+    $node = node_load($record->nid);
+    if (!$node) continue;
+
+    $total++;
+    if ($record->status == 1) {
+      $active_count++;
+    } else {
+      $draft_count++;
+    }
+
+    $jobs[] = array(
+      'nid'      => $node->nid,
+      'title'    => check_plain($node->title),
+      'url'      => url('node/' . $node->nid),
+      'edit_url' => url('node/' . $node->nid . '/edit'),
+      'status'   => $record->status == 1 ? 'Published' : 'Draft',
+      'created'  => format_date($node->created, 'custom', 'M j, Y'),
+      'location' => isset($node->field_job_location[LANGUAGE_NONE][0]['value'])
+        ? check_plain($node->field_job_location[LANGUAGE_NONE][0]['value']) : '',
+      'category' => isset($node->field_job_category[LANGUAGE_NONE][0]['tid'])
+        ? check_plain(taxonomy_term_load($node->field_job_category[LANGUAGE_NONE][0]['tid'])->name) : '',
+    );
+  }
+
+  // Check if organization profile exists to pass to the template
+  $org_query = db_select('node', 'n')
+    ->fields('n', array('nid'))
+    ->condition('n.type', 'organization_profile')
+    ->condition('n.uid', $user->uid)
+    ->range(0, 1)
+    ->execute()
+    ->fetchField();
+
+  $has_org_profile = !empty($org_query);
+
+  return theme('jobportal_employer_dashboard', array(
+    'jobs'         => $jobs,
+    'total_jobs'   => $total,
+    'active_jobs'  => $active_count,
+    'inactive_jobs' => $draft_count,
+    'username'     => check_plain($user->name),
+    'has_org_profile' => $has_org_profile,
+    'org_url'      => $has_org_profile ? url('node/' . $org_query . '/edit') : url('node/add/organization-profile'),
+  ));
+}
+
+function jobportal_core_has_applied($uid, $job_nid)
+{
+  if (!$uid || !$job_nid) {
+    return FALSE;
+  }
+
+  $job_node = node_load($job_nid);
+  if (!$job_node) {
+    return FALSE;
+  }
+
+  $job_title = $job_node->title;
+
+
+  $query = db_query("
+    SELECT ws.sid
+    FROM {webform_submissions} ws
+    JOIN {webform_submitted_data} wsd ON ws.sid = wsd.sid
+    JOIN {webform_component} wc ON wsd.cid = wc.cid AND wsd.nid = wc.nid
+    WHERE ws.uid = :uid
+    AND wc.form_key = 'job'
+    AND wsd.data = :title
+  ", array(':uid' => $uid, ':title' => $job_title));
+
+  return (bool) $query->fetchField();
 }
