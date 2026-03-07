@@ -23,6 +23,23 @@ function jobportal_core_menu()
     'type'             => MENU_NORMAL_ITEM,
   );
 
+  // View Applicants page.
+  $items['employer/dashboard/applicants/%'] = array(
+    'title'            => 'Job Applicants',
+    'page callback'    => 'jobportal_core_employer_applicants_page',
+    'page arguments'   => array(3),
+    'access callback'  => 'jobportal_core_employer_access',
+    'type'             => MENU_CALLBACK,
+  );
+
+  // Jobseeker dashboard.
+  $items['jobseeker-dashboard'] = array(
+    'title'            => 'Jobseeker Dashboard',
+    'page callback'    => 'jobportal_core_jobseeker_dashboard_page',
+    'access callback'  => 'jobportal_core_jobseeker_access',
+    'type'             => MENU_NORMAL_ITEM,
+  );
+
   return $items;
 }
 
@@ -37,6 +54,23 @@ function jobportal_core_employer_access()
   }
   foreach ($user->roles as $role) {
     if (strtolower($role) === 'employer') {
+      return TRUE;
+    }
+  }
+  return FALSE;
+}
+
+/**
+ * Access callback: only allow users with the Jobseeker role.
+ */
+function jobportal_core_jobseeker_access()
+{
+  global $user;
+  if (!user_is_logged_in()) {
+    return FALSE;
+  }
+  foreach ($user->roles as $role) {
+    if (strtolower($role) === 'jobseeker') {
       return TRUE;
     }
   }
@@ -72,6 +106,21 @@ function jobportal_core_theme($existing, $type, $theme, $path)
         'org_url'      => '',
       ),
       'template' => 'jobportal-employer-dashboard',
+      'path'     => drupal_get_path('module', 'jobportal_core') . '/templates',
+    ),
+
+    // Jobseeker dashboard page.
+    'jobportal_jobseeker_dashboard' => array(
+      'variables' => array(
+        'applications' => array(),
+        'total_apps'   => 0,
+        'hired'        => 0,
+        'shortlisted'  => 0,
+        'username'     => '',
+        'has_profile'  => FALSE,
+        'profile_url'  => '',
+      ),
+      'template' => 'jobportal-jobseeker-dashboard',
       'path'     => drupal_get_path('module', 'jobportal_core') . '/templates',
     ),
   );
@@ -169,11 +218,23 @@ function jobportal_core_employer_dashboard_page()
       $draft_count++;
     }
 
+    // Check if there's a webform node attached or submission data linked to this job posting
+    $applicant_count = db_query("
+      SELECT COUNT(ws.sid)
+      FROM {webform_submissions} ws
+      JOIN {webform_submitted_data} wsd ON ws.sid = wsd.sid
+      JOIN {webform_component} wc ON wsd.cid = wc.cid AND wsd.nid = wc.nid
+      WHERE wc.form_key = 'job'
+      AND wsd.data = :title
+    ", array(':title' => $node->title))->fetchField();
+
     $jobs[] = array(
       'nid'      => $node->nid,
       'title'    => check_plain($node->title),
       'url'      => url('node/' . $node->nid),
       'edit_url' => url('node/' . $node->nid . '/edit'),
+      'applicants_url' => url('employer/dashboard/applicants/' . $node->nid), // Assuming a custom path, adjust if using default webform path
+      'applicant_count' => $applicant_count,
       'status'   => $record->status == 1 ? 'Published' : 'Draft',
       'created'  => format_date($node->created, 'custom', 'M j, Y'),
       'location' => isset($node->field_job_location[LANGUAGE_NONE][0]['value'])
@@ -230,4 +291,313 @@ function jobportal_core_has_applied($uid, $job_nid)
   ", array(':uid' => $uid, ':title' => $job_title));
 
   return (bool) $query->fetchField();
+}
+
+/**
+ * Page callback: employer/dashboard/applicants/%
+ */
+function jobportal_core_employer_applicants_page($job_nid)
+{
+  global $user;
+
+  $job_node = node_load($job_nid);
+
+  if (!$job_node || $job_node->type !== 'job_posting' || $job_node->uid != $user->uid) {
+    return drupal_access_denied();
+  }
+
+  $job_title = check_plain($job_node->title);
+  drupal_set_title('Applicants for: ' . $job_title);
+  drupal_add_css(drupal_get_path('module', 'jobportal_core') . '/css/jobportal_core.css');
+
+  // Fetch all webform submissions where the 'job' field matches the current job title
+  // In a robust app, we should grab the specific webform node ID, assuming node 12 or global webform here.
+  // We will query to find sids first based on the component match.
+  $result = db_query("
+    SELECT ws.sid, ws.uid, ws.submitted
+    FROM {webform_submissions} ws
+    JOIN {webform_submitted_data} wsd ON ws.sid = wsd.sid
+    JOIN {webform_component} wc ON wsd.cid = wc.cid AND wsd.nid = wc.nid
+    WHERE wc.form_key = 'job'
+    AND wsd.data = :title
+    ORDER BY ws.submitted DESC
+  ", array(':title' => $job_title));
+
+  $header = array('Applicant Name', 'Email', 'Applied On', 'Actions');
+  $rows = array();
+
+  foreach ($result as $record) {
+    $account = user_load($record->uid);
+    $name = $account ? format_username($account) : 'Anonymous';
+    $email = $account ? $account->mail : 'Unknown';
+    $date = format_date($record->submitted, 'short');
+
+    // Attempt to load the actual webform presentation link.
+    // We need the nid the webform was submitted to.
+    $form_nid = db_query("SELECT nid FROM {webform_submissions} WHERE sid = :sid", array(':sid' => $record->sid))->fetchField();
+
+    $view_link = l('View Application', "node/{$form_nid}/submission/{$record->sid}", array('attributes' => array('class' => array('emp-btn', 'emp-btn--sm', 'emp-btn--outline'))));
+
+    $rows[] = array(
+      $name,
+      $email,
+      $date,
+      $view_link,
+    );
+  }
+
+  $output = '<div class="emp-dashboard"><div class="emp-dashboard__header">';
+  $output .= '<a href="' . url('employer/dashboard') . '" class="emp-btn emp-btn--outline">← Back to Dashboard</a>';
+  $output .= '</div>';
+
+  if (empty($rows)) {
+    $output .= '<div class="emp-empty"><div class="emp-empty__icon">📭</div><h2 class="emp-empty__title">No applicants yet</h2></div>';
+  } else {
+    $output .= '<div class="emp-table-wrap">';
+    $output .= theme('table', array('header' => $header, 'rows' => $rows, 'attributes' => array('class' => array('emp-table'))));
+    $output .= '</div>';
+  }
+
+  $output .= '</div>';
+
+  return $output;
+}
+
+/**
+ * Implements hook_node_access().
+ * Prevents an employer from creating more than one organization profile.
+ */
+function jobportal_core_node_access($node, $op, $account)
+{
+  $type = is_string($node) ? $node : $node->type;
+
+  if ($type === 'organization_profile' && $op === 'create') {
+    // Check if the user already has an organization profile
+    $count = db_select('node', 'n')
+      ->fields('n', array('nid'))
+      ->condition('n.type', 'organization_profile')
+      ->condition('n.uid', $account->uid)
+      ->range(0, 1)
+      ->execute()
+      ->rowCount();
+
+    if ($count > 0) {
+      // The user already has an organization profile, deny creation
+      return NODE_ACCESS_DENY;
+    }
+  }
+
+  return NODE_ACCESS_IGNORE;
+}
+
+/**
+ * Page callback: jobseeker-dashboard
+ */
+function jobportal_core_jobseeker_dashboard_page()
+{
+  global $user;
+
+  drupal_add_css(drupal_get_path('module', 'jobportal_core') . '/css/jobportal_core.css');
+
+  $applications = array();
+  $total_apps = 0;
+  $hired = 0;
+  $shortlisted = 0;
+
+  // Query webform submissions made by this user to the 'job' component
+  // We grab the submission ID and the data (the job title)
+  $result = db_query("
+    SELECT ws.sid, wsd.data as job_title, ws.submitted
+    FROM {webform_submissions} ws
+    JOIN {webform_submitted_data} wsd ON ws.sid = wsd.sid
+    JOIN {webform_component} wc ON wsd.cid = wc.cid AND wsd.nid = wc.nid
+    WHERE ws.uid = :uid
+    AND wc.form_key = 'job'
+    ORDER BY ws.submitted DESC
+  ", array(':uid' => $user->uid));
+
+  foreach ($result as $record) {
+    // Attempt to lookup the actual job posting node ID based on the exact title
+    $job_nid = db_select('node', 'n')
+      ->fields('n', array('nid'))
+      ->condition('n.type', 'job_posting')
+      ->condition('n.title', $record->job_title)
+      ->range(0, 1)
+      ->execute()
+      ->fetchField();
+
+    // Query for the specific application_status field from the SAME submission SID
+    // The component key is exactly 'application_status'
+    $status_record = db_query("
+      SELECT wsd.data
+      FROM {webform_submitted_data} wsd
+      JOIN {webform_component} wc ON wsd.cid = wc.cid AND wsd.nid = wc.nid
+      WHERE wsd.sid = :sid
+      AND wc.form_key = 'application_status'
+    ", array(':sid' => $record->sid))->fetchField();
+
+    $status_value = !empty($status_record) ? strtolower(trim($status_record)) : 'applied';
+
+    $total_apps++;
+    if ($status_value === 'hired') {
+      $hired++;
+    } elseif ($status_value === 'shortlisted') {
+      $shortlisted++;
+    }
+
+    $applications[] = array(
+      'title'   => check_plain($record->job_title),
+      'url'     => $job_nid ? url('node/' . $job_nid) : '#',
+      'date'    => format_date($record->submitted, 'custom', 'M j, Y'),
+      'status'  => ucfirst($status_value),
+    );
+  }
+
+  // Check if jobseeker profile exists
+  $profile_query = db_select('node', 'n')
+    ->fields('n', array('nid'))
+    ->condition('n.type', 'jobseeker_profile')
+    ->condition('n.uid', $user->uid)
+    ->range(0, 1)
+    ->execute()
+    ->fetchField();
+
+  $has_profile = !empty($profile_query);
+
+  return theme('jobportal_jobseeker_dashboard', array(
+    'applications' => $applications,
+    'total_apps'   => $total_apps,
+    'hired'        => $hired,
+    'shortlisted'  => $shortlisted,
+    'username'     => check_plain($user->name),
+    'has_profile'  => $has_profile,
+    'profile_url'  => $has_profile ? url('node/' . $profile_query . '/edit') : url('node/add/jobseeker-profile'),
+  ));
+}
+
+/**
+ * Implements hook_cron_queue_info().
+ */
+function jobportal_core_cron_queue_info()
+{
+  $queues['jobportal_hired_email_queue'] = array(
+    'worker callback' => 'jobportal_core_send_hired_email',
+    'time' => 60, // Limit processing to 60 seconds per cron run
+  );
+  return $queues;
+}
+
+/**
+ * Implements hook_webform_submission_update().
+ */
+function jobportal_core_webform_submission_update($node, $submission)
+{
+  // We only care about the Job Application webform or any webform 
+  // that uses the 'application_status' component. Let's do a component check.
+
+  $status_cid = FALSE;
+  $email_cid = FALSE;
+  $name_cid = FALSE;
+  $job_cid = FALSE;
+
+  // Find component IDs based on form_key
+  foreach ($node->webform['components'] as $cid => $component) {
+    if ($component['form_key'] == 'application_status') {
+      $status_cid = $cid;
+    } elseif ($component['form_key'] == 'job_seeker_email' || $component['form_key'] == 'email' || $component['form_key'] == 'email_address') {
+      $email_cid = $cid;
+    } elseif ($component['form_key'] == 'first_name' || $component['form_key'] == 'name' || $component['form_key'] == 'full_name') {
+      $name_cid = $cid;
+    } elseif ($component['form_key'] == 'job' || $component['form_key'] == 'applied_position') {
+      $job_cid = $cid;
+    }
+  }
+
+  // If this Webform has an application status and an email field, process it!
+  if ($status_cid && $email_cid) {
+    $new_status = isset($submission->data[$status_cid]) ? strtolower(trim($submission->data[$status_cid][0])) : '';
+
+    // Determine the OLD status by querying before this submission was saved
+    // Actually, hook_webform_submission_update is triggered *after* save,
+    // so we need to rely on the tracking of standard Drupal or just conditionally throw to queue.
+    // To prevent spamming, we will check if an employer explicitly sets it to 'hired'.
+    if ($new_status === 'hired') {
+      $candidate_email = isset($submission->data[$email_cid]) ? trim($submission->data[$email_cid][0]) : '';
+      $candidate_name = ($name_cid && isset($submission->data[$name_cid])) ? trim($submission->data[$name_cid][0]) : 'Candidate';
+      $job_applied = ($job_cid && isset($submission->data[$job_cid])) ? trim($submission->data[$job_cid][0]) : 'the position';
+
+      if (!empty($candidate_email)) {
+        // Construct the payload
+        $payload = array(
+          'email' => $candidate_email,
+          'name' => $candidate_name,
+          'job' => $job_applied,
+          'employer' => isset($GLOBALS['user']->name) ? $GLOBALS['user']->name : 'The Employer',
+        );
+
+        // Add to the cron queue
+        $queue = DrupalQueue::get('jobportal_hired_email_queue');
+        $queue->createItem($payload);
+
+        watchdog('jobportal_core', 'Added candidate %email to the hired email queue.', array('%email' => $candidate_email), WATCHDOG_NOTICE);
+      }
+    }
+  }
+}
+
+/**
+ * Queue worker callback: Sends the hired email.
+ */
+function jobportal_core_send_hired_email($item)
+{
+  $module = 'jobportal_core';
+  $key = 'hired_candidate';
+  $to = $item['email'];
+  $language = language_default();
+
+  // Pass the payload variables into the email params
+  $params = array(
+    'name' => $item['name'],
+    'job' => $item['job'],
+    'employer' => $item['employer'],
+  );
+
+  $from = variable_get('site_mail', ini_get('sendmail_from'));
+  $send = TRUE;
+
+  // Utilize drupal_mail to actually send it via SMTP (assuming SMTP module is configured)
+  $result = drupal_mail($module, $key, $to, $language, $params, $from, $send);
+
+  if ($result['result'] == TRUE) {
+    watchdog('jobportal_core', 'Successfully sent hiring email to %email.', array('%email' => $to), WATCHDOG_NOTICE);
+  } else {
+    watchdog('jobportal_core', 'Failed to send hiring email to %email.', array('%email' => $to), WATCHDOG_ERROR);
+  }
+}
+
+/**
+ * Implements hook_mail().
+ */
+function jobportal_core_mail($key, &$message, $params)
+{
+  switch ($key) {
+    case 'hired_candidate':
+      $site_name = variable_get('site_name', 'Our Job Portal');
+      $message['subject'] = t('Congratulations from @site_name - You are Hired!', array('@site_name' => $site_name));
+
+      $body = array();
+      $body[] = t('Dear @name,', array('@name' => $params['name']));
+      $body[] = '';
+      $body[] = t('We are incredibly thrilled to inform you that your application status for **@job** has been updated to HIRED!', array('@job' => $params['job']));
+      $body[] = '';
+      $body[] = t('Congratulations on your successful application. The employer (@employer) will be in touch with you shortly regarding the next steps.', array('@employer' => $params['employer']));
+      $body[] = '';
+      $body[] = t('Welcome to the team!');
+      $body[] = t('--');
+      $body[] = t('Best regards,');
+      $body[] = t('The @site_name Team', array('@site_name' => $site_name));
+
+      $message['body'] = $body;
+      break;
+  }
 }

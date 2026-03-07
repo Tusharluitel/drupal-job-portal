@@ -22,9 +22,20 @@
             <h1 class="emp-dashboard__title">Employer Dashboard</h1>
             <p class="emp-dashboard__subtitle">Manage your job listings and track applications</p>
         </div>
-        <a href="<?php print url('node/add/job-posting'); ?>" class="emp-btn emp-btn--primary emp-btn--large">
-            <span class="emp-btn__icon">＋</span> Post a Job
-        </a>
+        <div class="emp-dashboard__actions">
+            <?php if ($has_org_profile): ?>
+                <a href="<?php print $org_url; ?>" class="emp-btn emp-btn--outline emp-btn--large" style="margin-right: 12px;">
+                    <span class="emp-btn__icon">🏢</span> Edit Org Profile
+                </a>
+            <?php else: ?>
+                <a href="<?php print $org_url; ?>" class="emp-btn emp-btn--outline emp-btn--large" style="margin-right: 12px; border-color: #2563eb; color: #2563eb;">
+                    <span class="emp-btn__icon">🏢</span> Add Org Profile
+                </a>
+            <?php endif; ?>
+            <a href="<?php print url('node/add/job-posting'); ?>" class="emp-btn emp-btn--primary emp-btn--large">
+                <span class="emp-btn__icon">＋</span> Post a Job
+            </a>
+        </div>
     </div>
 
     <!-- =========================================
@@ -105,9 +116,15 @@
                                 <?php endif; ?>
                             </td>
                             <td class="emp-table__td emp-table__td--center">
-                                <a href="<?php print $job['edit_url']; ?>" class="emp-btn emp-btn--outline emp-btn--sm">
+                                <a href="<?php print $job['edit_url']; ?>" class="emp-btn emp-btn--outline emp-btn--sm" title="Edit Job Posting">
                                     ✏ Edit
                                 </a>
+                                <?php if ($job['applicant_count'] > 0): ?>
+                                    <a href="<?php print $job['applicants_url']; ?>" class="emp-btn emp-btn--primary emp-btn--sm" style="margin-left: 8px;" title="View <?php print $job['applicant_count']; ?> Applicant(s)">
+                                        👥 Applicants
+                                        <span style="background: rgba(255,255,255,0.25); border-radius: 12px; padding: 2px 6px; font-size: 0.8em; margin-left: 6px;"><?php print $job['applicant_count']; ?></span>
+                                    </a>
+                                <?php endif; ?>
                             </td>
                         </tr>
                     <?php endforeach; ?>

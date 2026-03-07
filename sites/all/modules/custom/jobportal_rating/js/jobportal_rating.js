@@ -25,6 +25,43 @@
         $(this).closest('.dynamic-item').remove();
       });
 
+      $('#jobportal-rating-form', context).once('validate-rating-form').submit(function (e) {
+        var isValid = true;
+        var errorMessage = '';
+
+        $('input[name="pros[]"]', this).each(function () {
+          var val = $(this).val().trim();
+          if (val.length > 0 && val.length < 3) {
+            isValid = false;
+            errorMessage += 'Each Pro must be at least 3 characters long.\n';
+            $(this).css('border-color', '#ef4444');
+            return false;
+          } else {
+            $(this).css('border-color', '');
+          }
+        });
+
+   
+        if (isValid) {
+          $('input[name="cons[]"]', this).each(function () {
+            var val = $(this).val().trim();
+            if (val.length > 0 && val.length < 3) {
+              isValid = false;
+              errorMessage += 'Each Con must be at least 3 characters long.\n';
+              $(this).css('border-color', '#ef4444');
+              return false; 
+            } else {
+              $(this).css('border-color', ''); 
+            }
+          });
+        }
+
+        if (!isValid) {
+          e.preventDefault();
+          alert(errorMessage);
+        }
+      });
+
     }
   };
 })(jQuery);
