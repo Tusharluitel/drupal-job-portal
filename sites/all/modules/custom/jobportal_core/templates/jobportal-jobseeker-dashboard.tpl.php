@@ -1,7 +1,4 @@
-<!-- =========================================
-     Jobseeker Dashboard Template
-     Variables: $applications, $total_apps, $hired, $shortlisted, $username, $has_profile, $profile_url
-========================================= -->
+
 <div class="emp-dashboard">
 
     <!-- Header bar -->
@@ -51,7 +48,6 @@
         </div>
     </div>
 
-    <!-- Applications table / empty state -->
     <?php if (empty($applications)): ?>
         <div class="emp-empty">
             <div class="emp-empty__icon">🚀</div>
@@ -87,16 +83,16 @@
                             <td class="emp-table__td emp-table__td--center">
                                 <?php
                                 $status_lower = strtolower($app['status']);
-                                $badge_class = 'emp-badge--inactive'; // default gray
+                                $badge_class = 'emp-badge--inactive'; 
 
                                 if ($status_lower === 'hired') {
-                                    $badge_class = 'emp-badge--active'; // green
+                                    $badge_class = 'emp-badge--active'; 
                                 } elseif ($status_lower === 'shortlisted') {
-                                    $badge_class = 'emp-badge--info'; // blue
+                                    $badge_class = 'emp-badge--info'; 
                                 } elseif ($status_lower === 'rejected') {
-                                    $badge_class = 'emp-badge--danger'; // red
+                                    $badge_class = 'emp-badge--danger'; 
                                 } elseif ($status_lower === 'applied') {
-                                    $badge_class = 'emp-badge--accent'; // yellow
+                                    $badge_class = 'emp-badge--accent'; 
                                 }
                                 ?>
                                 <span class="emp-badge <?php print $badge_class; ?>"><?php print check_plain($app['status']); ?></span>
@@ -113,4 +109,4 @@
         </div>
     <?php endif; ?>
 
-</div><!-- /.emp-dashboard -->
+</div>

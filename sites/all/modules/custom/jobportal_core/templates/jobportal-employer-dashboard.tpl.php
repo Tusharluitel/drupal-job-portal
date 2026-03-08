@@ -1,22 +1,4 @@
-<?php
-
-/**
- * @file
- * Template: Employer Dashboard
- *
- * Variables:
- * - $jobs          : array of job arrays (nid, title, url, edit_url, category, created, status)
- * - $total_jobs    : int
- * - $active_jobs   : int
- * - $inactive_jobs : int
- */
-?>
-
 <div class="emp-dashboard">
-
-    <!-- =========================================
-       Header bar
-  ========================================= -->
     <div class="emp-dashboard__header">
         <div class="emp-dashboard__heading">
             <h1 class="emp-dashboard__title">Employer Dashboard</h1>
@@ -37,10 +19,6 @@
             </a>
         </div>
     </div>
-
-    <!-- =========================================
-       Stats row
-  ========================================= -->
     <div class="emp-stats">
         <div class="emp-stat-card emp-stat-card--blue">
             <div class="emp-stat-card__icon">📋</div>
@@ -65,9 +43,6 @@
         </div>
     </div>
 
-    <!-- =========================================
-       Jobs table / empty state
-  ========================================= -->
     <?php if (empty($jobs)): ?>
         <div class="emp-empty">
             <div class="emp-empty__icon">📂</div>
@@ -133,4 +108,4 @@
         </div>
     <?php endif; ?>
 
-</div><!-- /.emp-dashboard -->
+</div>

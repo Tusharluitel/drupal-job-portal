@@ -1,10 +1,14 @@
 <?php
 
 
-class JobportalSavedJobsTestCase extends DrupalWebTestCase {
+class JobportalSavedJobsTestCase extends DrupalWebTestCase
+{
+  protected $user;
+  protected $job;
 
-  
-  public static function getInfo() {
+
+  public static function getInfo()
+  {
     return array(
       'name' => 'Jobportal Saved Jobs Basic Test',
       'description' => 'Tests save and unsave functionality.',
@@ -12,11 +16,20 @@ class JobportalSavedJobsTestCase extends DrupalWebTestCase {
     );
   }
 
-  public function setUp() {
+  public function setUp()
+  {
     parent::setUp(
       'node',
+      'entity',
+      'profile2',
+      'field_group',
+      'workbench_moderation',
+      'rules',
       'jobportal_saved_jobs'
     );
+    // Rebuild the schema and entity caches for the testing environment prefix.
+    drupal_get_schema(NULL, TRUE);
+    entity_info_cache_clear();
 
     // Create Jobseeker role.
     $rid = $this->drupalCreateRole(array(), 'Jobseeker');
@@ -39,7 +52,8 @@ class JobportalSavedJobsTestCase extends DrupalWebTestCase {
    * PASS TEST
    * Saving job should return TRUE.
    */
-  public function testSaveJobPass() {
+  public function testSaveJobPass()
+  {
 
     jobportal_saved_jobs_save($this->user->uid, $this->job->nid);
 
@@ -55,7 +69,8 @@ class JobportalSavedJobsTestCase extends DrupalWebTestCase {
    * FAIL TEST
    * This intentionally fails.
    */
-  public function testSaveJobFail() {
+  public function testSaveJobFail()
+  {
 
     $saved = jobportal_saved_jobs_is_saved(
       $this->user->uid,
@@ -64,5 +79,4 @@ class JobportalSavedJobsTestCase extends DrupalWebTestCase {
 
     $this->assertTrue($saved, 'This test should FAIL.');
   }
-
 }
