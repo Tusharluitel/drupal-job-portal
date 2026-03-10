@@ -60,7 +60,7 @@
                         <li><?php print render($content['field_salary_range']); ?></li>
                     <?php endif; ?>
                     <?php if (!empty($content['field_application_deadline'])): ?>
-                        <li><strong>Deadline:</strong> <?php print render($content['field_application_deadline']); ?></li>
+                        <li> <?php print render($content['field_application_deadline']); ?></li>
                     <?php endif; ?>
                 </ul>
 
