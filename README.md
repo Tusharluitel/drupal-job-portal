@@ -23,6 +23,7 @@ The backbone of the application.
 Handles the review and rating system for Organization profiles.
 - **AJAX Interactions:** Utilizes custom JavaScript to handle asynchronous rating submissions, providing a seamless user experience without full page reloads.
 - **Validation:** Implements both client and server side validation when user attempts to enter the Pros and Cons.
+- **Slack Notifications:** Implements slack notification using webhook when user rates organization.
 - **Custom Templates:** Declares module-specific templates utilizing `hook_theme` to render the rating dashboards cleanly.
 
 ### 3. Job Portal Saved Jobs (`jobportal_saved_jobs`)
