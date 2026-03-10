@@ -70,6 +70,12 @@
                             <td class="emp-table__td emp-table__td--title">
                                 <a href="<?php print $job['url']; ?>" class="emp-table__job-link">
                                     <?php print $job['title']; ?>
+                                    <?php if ($job['applicant_count'] > 0): ?>
+                                    <a href="<?php print $job['applicants_url']; ?>" class="emp-btn emp-btn--primary emp-btn--sm" style="margin-left: 8px;" title="View <?php print $job['applicant_count']; ?> Applicant(s)">
+                                        👥 Applicants
+                                        <span style="background: rgba(255,255,255,0.25); border-radius: 12px; padding: 2px 6px; font-size: 0.8em; margin-left: 6px;"><?php print $job['applicant_count']; ?></span>
+                                    </a>
+                                <?php endif; ?>
                                 </a>
                             </td>
                             <td class="emp-table__td">
@@ -94,12 +100,7 @@
                                 <a href="<?php print $job['edit_url']; ?>" class="emp-btn emp-btn--outline emp-btn--sm" title="Edit Job Posting">
                                     ✏ Edit
                                 </a>
-                                <?php if ($job['applicant_count'] > 0): ?>
-                                    <a href="<?php print $job['applicants_url']; ?>" class="emp-btn emp-btn--primary emp-btn--sm" style="margin-left: 8px;" title="View <?php print $job['applicant_count']; ?> Applicant(s)">
-                                        👥 Applicants
-                                        <span style="background: rgba(255,255,255,0.25); border-radius: 12px; padding: 2px 6px; font-size: 0.8em; margin-left: 6px;"><?php print $job['applicant_count']; ?></span>
-                                    </a>
-                                <?php endif; ?>
+                                
                             </td>
                         </tr>
                     <?php endforeach; ?>

@@ -8,15 +8,6 @@
             <p class="emp-dashboard__subtitle">Track your job applications and manage your profile</p>
         </div>
         <div class="emp-dashboard__actions">
-            <?php if ($has_profile): ?>
-                <a href="<?php print $profile_url; ?>" class="emp-btn emp-btn--outline emp-btn--large" style="margin-right: 12px;">
-                    <span class="emp-btn__icon">👤</span> Edit Profile
-                </a>
-            <?php else: ?>
-                <a href="<?php print $profile_url; ?>" class="emp-btn emp-btn--outline emp-btn--large" style="margin-right: 12px; border-color: #2563eb; color: #2563eb;">
-                    <span class="emp-btn__icon">👤</span> Add Profile
-                </a>
-            <?php endif; ?>
             <a href="<?php print url('jobs'); ?>" class="emp-btn emp-btn--primary emp-btn--large">
                 <span class="emp-btn__icon">💼</span> Find Jobs
             </a>

@@ -54,13 +54,10 @@
                 <h3>Job Details</h3>
                 <ul>
                     <?php if (!empty($content['field_experience_level'])): ?>
-                        <li><strong>Experience:</strong> <?php print render($content['field_experience_level']); ?></li>
+                        <li><?php print render($content['field_experience_level']); ?></li>
                     <?php endif; ?>
                     <?php if (!empty($content['field_salary_range'])): ?>
-                        <li><strong>Salary:</strong> <?php print render($content['field_salary_range']); ?></li>
-                    <?php endif; ?>
-                    <?php if (!empty($content['field_vacancies'])): ?>
-                        <li><strong>Vacancies:</strong> <?php print render($content['field_vacancies']); ?></li>
+                        <li><?php print render($content['field_salary_range']); ?></li>
                     <?php endif; ?>
                     <?php if (!empty($content['field_application_deadline'])): ?>
                         <li><strong>Deadline:</strong> <?php print render($content['field_application_deadline']); ?></li>
