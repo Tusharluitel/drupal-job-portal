@@ -17,7 +17,7 @@
                 <div class="user-menu">
                     <a href="<?php
                                 if ($is_employer) {
-                                    print url('employer-dashboard');
+                                    print url('employer/dashboard');
                                 } elseif ($is_jobseeker) {
                                     print url('jobseeker-dashboard');
                                 } else {

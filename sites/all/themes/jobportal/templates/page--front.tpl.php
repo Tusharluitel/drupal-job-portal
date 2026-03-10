@@ -19,7 +19,7 @@
                 <div class="user-menu">
                     <a href="<?php
                                 if ($is_employer) {
-                                    print url('employer-dashboard');
+                                    print url('employer/dashboard');
                                 } elseif ($is_jobseeker) {
                                     print url('jobseeker-dashboard');
                                 } else {
@@ -160,7 +160,7 @@ drupal_add_js(array('jobportalSearch' => array('searchUrl' => url('api/jobs/sear
                 <ul>
                     <li><a href="<?php print url('node/add/job-posting'); ?>">Post a Job</a></li>
                     <li><a href="<?php print url('user/register'); ?>">Register</a></li>
-                    <li><a href="<?php print url('employer-dashboard'); ?>">Dashboard</a></li>
+                    <li><a href="<?php print url('employer/dashboard'); ?>">Dashboard</a></li>
                 </ul>
             </div>
         </div>
