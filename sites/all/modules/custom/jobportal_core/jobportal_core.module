@@ -218,7 +218,6 @@ function jobportal_core_employer_dashboard_page()
       $draft_count++;
     }
 
-    // Check if there's a webform node attached or submission data linked to this job posting
     $applicant_count = db_query("
       SELECT COUNT(ws.sid)
       FROM {webform_submissions} ws
@@ -244,7 +243,6 @@ function jobportal_core_employer_dashboard_page()
     );
   }
 
-  // Check if organization profile exists to pass to the template
   $org_query = db_select('node', 'n')
     ->fields('n', array('nid'))
     ->condition('n.type', 'organization_profile')
