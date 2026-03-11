@@ -42,10 +42,33 @@ The presentation layer is built in `sites/all/themes/jobportal`.
 ## Utilization of CMS Features (Site Building)
 Beyond code, the portal heavily relies on Drupal's robust site-building tools:
 
-- **Views:** Used to query the database visually without writing raw SQL. Views handle complex lists like "Latest Jobs," "Search Results," and "Applicant Lists" with pagination, exposed filters, and precise sorting.
 - **Rules:** Used to trigger custom actions based on site events (e.g., welcome message when a user registers, sending mail to admin for job approval) without writing custom code, keeping business rules manageable by administrators.
 - **Taxonomy:** Categorization engine used for Job Categories. This allows jobs to be tagged dynamically and creates instant landing pages for category-specific feeds.
 - **SMTP Mailing System:** Integrated with the SMTP Authentication Support module (or similar) to ensure high deliverability of system notifications (like the hired candidate emails).
+
+## Setup & Configuration
+
+After cloning the repository and importing the provided database file, a few additional configurations are required for the application to function correctly.
+
+### 1. Slack Webhook Configuration
+The system sends Slack notifications when a user submits a rating for an organization.
+
+To enable this feature:
+
+- Create an **Incoming Webhook** in your Slack workspace.
+- Copy the generated webhook URL.
+- Update the webhook URL in the configuration used by the `jobportal_rating` module.
+- Ensure the server can send outgoing HTTP requests to the Slack webhook endpoint.
+
+Once configured, rating activities will trigger notifications in the configured Slack channel.
+
+### 2. SMTP Mail Configuration
+System-generated emails such as job application updates and hiring notifications require SMTP configuration.
+
+Steps to configure SMTP:
+
+- Install and enable the **SMTP Authentication Support** module.
+- Navigate to the SMTP configuration page:
 
 ## Conclusion
 This Job Portal application demonstrates a deep understanding of Drupal 7's architecture. By carefully balancing custom module development (code), custom theming (presentation), and site building tools (configuration), the platform is performant, maintainable, and highly scalable.
